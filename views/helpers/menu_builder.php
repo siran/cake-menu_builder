@@ -178,7 +178,15 @@ class MenuBuilderHelper extends AppHelper {
         $check = false;
         if(isset($item['url'])):
             if($item['partialMatch']):
-                $check = (strpos(Router::normalize($this->here), Router::normalize($item['url']))===0);
+				$item['alternativeActiveUrl'] = empty($item['alternativeActiveUrl']) ? array() : $item['alternativeActiveUrl'];
+				$item['url'] = empty($item['url']) ? array() : $item['url'];
+				$item['url'] = !is_array($item['url']) ? array($item['url']) : $item['url'];
+				$urls = array_merge(array($item['url']), $item['alternativeActiveUrl']);
+				foreach($urls as $url) {
+					//debug(Router::normalize($this->here) .' = ' . Router::normalize($url));
+					$check = strpos(Router::normalize($this->here), Router::normalize($url))===0;
+					if ($check) break;
+				}
             else :
                 $check = Router::normalize($this->here) === Router::normalize($item['url']);
             endif;
