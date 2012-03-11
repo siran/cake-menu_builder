@@ -139,6 +139,7 @@ class MenuBuilderHelper extends AppHelper {
         if($out==='') return '';
         $class = '';
         if(isset($id) && $id!='children') $class = ' id="'.$id.'"';
+        if (!empty($data[$id]['class'])) $options['class'] .= ' '.$data[$id]['class'];
         if(isset($options['class'])) $class .= ' class="'.$options['class'].'"';
         
         $pad = str_repeat("\t", $this->_depth);
