@@ -138,6 +138,7 @@ class MenuBuilderHelper extends AppHelper {
 		$nowIsActive = false;
 		if (is_array($parent)) {
 			foreach ($parent as $pos => $item) {
+				if (!is_array($item)) continue;
 				$this->_depth++;
 
 				$ret = $this->_buildItem($item, $pos-$offset, $nowIsActive);
@@ -162,7 +163,7 @@ class MenuBuilderHelper extends AppHelper {
 
 
 		$class = (isset($id) && ($id != 'children')) ? ' id="'.$ulId.'"' : '';
-
+		if (!empty($data[$id]['class'])) $options['class'] .= ' '.$data[$id]['class'];
 		if (isset($options['class'])) {
 			$class .= ' class="'.$options['class'].'"';
 		}
@@ -213,7 +214,16 @@ class MenuBuilderHelper extends AppHelper {
 		$check = false;
 		if (isset($item['url'])) {
 			if ($item['partialMatch']) {
-				$check = (strpos(Router::normalize($this->here), Router::normalize($item['url']))===0);
+				//$check = (strpos(Router::normalize($this->here), Router::normalize($item['url']))===0);
+				$item['alternativeActiveUrl'] = empty($item['alternativeActiveUrl']) ? array() : $item['alternativeActiveUrl'];
+				$item['url'] = empty($item['url']) ? array() : $item['url'];
+				$item['url'] = !is_array($item['url']) ? array($item['url']) : $item['url'];
+				$urls = array_merge(array($item['url']), $item['alternativeActiveUrl']);
+				foreach($urls as $url) {
+					//debug(Router::normalize($this->here) .' = ' . Router::normalize($url));
+					$check = strpos(Router::normalize($this->here), Router::normalize($url))===0;
+					if ($check) break;
+				}
 			} else {
 				$check = Router::normalize($this->here) === Router::normalize($item['url']);
 			}
