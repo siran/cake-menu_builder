@@ -27,7 +27,7 @@ class MenuBuilderHelper extends AppHelper {
  * @access protected
  */
     protected $_menu = array();
-    
+
 /**
  * Current user group
  *
@@ -35,7 +35,7 @@ class MenuBuilderHelper extends AppHelper {
  * @access protected
  */
     protected $_group = null;
-    
+
 /**
  * Current depth of menu
  *
@@ -43,7 +43,7 @@ class MenuBuilderHelper extends AppHelper {
  * @access protected
  */
     protected $_depth = 0;
-    
+
 /**
  * defaults property
  *
@@ -51,7 +51,7 @@ class MenuBuilderHelper extends AppHelper {
  * @access public
  */
     protected $_defaults = array(
-        'separator' => false, 
+        'separator' => false,
         'children' => null,
         'title' => null,
         'url' => null,
@@ -61,7 +61,7 @@ class MenuBuilderHelper extends AppHelper {
         'id' => null,
         'class' => null,
     );
-    
+
 /**
  * settings property
  *
@@ -69,10 +69,10 @@ class MenuBuilderHelper extends AppHelper {
  * @access public
  */
     public $settings = array(
-        'activeClass' => 'active', 
-        'firstClass' => 'first-item', 
-        'childrenClass' => 'has-children', 
-        'evenOdd' => false, 
+        'activeClass' => 'active',
+        'firstClass' => 'first-item',
+        'childrenClass' => 'has-children',
+        'evenOdd' => false,
         'itemFormat' => '<li%s>%s%s</li>',
         'wrapperFormat' => '<ul%s>%s</ul>',
         'noLinkFormat' => '<a href="#">%s</a>',
@@ -81,7 +81,7 @@ class MenuBuilderHelper extends AppHelper {
         'authModel' => 'User',
         'authField' => 'group',
     );
-    
+
 /**
  * Constructor.
  *
@@ -92,14 +92,14 @@ class MenuBuilderHelper extends AppHelper {
         $view =& ClassRegistry::getObject('view');
         if(!isset($view->viewVars[$this->settings['menuVar']])) return;
         $this->_menu = $view->viewVars[$this->settings['menuVar']];
-        
+
         if(isset($view->viewVars[$this->settings['authVar']])):
             $tmp = $view->viewVars[$this->settings['authVar']];
             if(isset($tmp[$this->settings['authModel']][$this->settings['authField']]))
                 $this->_group = $tmp[$this->settings['authModel']][$this->settings['authField']];
         endif;
     }
-    
+
 /**
  * Returns the whole menu HTML.
  *
@@ -111,17 +111,17 @@ class MenuBuilderHelper extends AppHelper {
  */
     public function build($id=null, $options=array(), &$data=null, &$isActive=false) {
         if(is_null($data)) $data =& $this->_menu;
-        
+
         if(!empty($options)):
             $this->settings = am($this->settings, $options);
         endif;
-        
+
         if(!isset($data[$id])):
             $parent = &$data;
         else:
             $parent = &$data[$id];
         endif;
-        
+
         $out = '';
         $offset = 0;
         $nowIsActive = false;
@@ -135,17 +135,17 @@ class MenuBuilderHelper extends AppHelper {
                 $isActive = $isActive || $nowIsActive;
             endforeach;
         endif;
-        
+
         if($out==='') return '';
         $class = '';
         if(isset($id) && $id!='children') $class = ' id="'.$id.'"';
         if (!empty($data[$id]['class'])) $options['class'] .= ' '.$data[$id]['class'];
         if(isset($options['class'])) $class .= ' class="'.$options['class'].'"';
-        
+
         $pad = str_repeat("\t", $this->_depth);
         return sprintf('%s'.$this->settings['wrapperFormat']."\n", $pad, $class, "\n".$out.$pad);
     }
-    
+
 /**
  * Returns a menu item HTML.
  *
@@ -155,16 +155,16 @@ class MenuBuilderHelper extends AppHelper {
  * @access protected
  */
     protected function _buildItem(&$item, $pos=-1, &$isActive=false) {
-        
+
         $item = am($this->_defaults, $item);
-        
+
         if($item['separator']) return $item['separator'];
         if(is_null($item['title'])) return '';
-        
+
         if(!empty($item['permissions'])):
             if(!in_array($this->_group, (array)$item['permissions'])) return '';
         endif;
-        
+
         $children = '';
         $nowIsActive = false;
         if($hasChildren = is_array($item['children'])):
@@ -172,13 +172,13 @@ class MenuBuilderHelper extends AppHelper {
             $children = $this->build('children', array(), $item, $nowIsActive);
             $this->_depth--;
         endif;
-        
+
         // For Permissions empty child
         if($children==='') $hasChildren = false;
-        
+
         $check = false;
-        if(isset($item['url'])):
-            if($item['partialMatch']):
+        if (isset($item['url']) && !empty($item['partialMatch'])) {
+            if (is_bool($item['partialMatch'])) {
 				$item['alternativeActiveUrl'] = empty($item['alternativeActiveUrl']) ? array() : $item['alternativeActiveUrl'];
 				$item['url'] = empty($item['url']) ? array() : $item['url'];
 				$item['url'] = !is_array($item['url']) ? array($item['url']) : $item['url'];
@@ -188,19 +188,21 @@ class MenuBuilderHelper extends AppHelper {
 					$check = strpos(Router::normalize($this->here), Router::normalize($url))===0;
 					if ($check) break;
 				}
-            else :
-                $check = Router::normalize($this->here) === Router::normalize($item['url']);
-            endif;
-        endif;
-        
+			} elseif ($item['partialMatch'] == 'prefixControllerAction') {
+				$check = ($this->params['controller'] == $item['url']['controller'] && $this->params['action'] == $this->params['prefix'].'_'.$item['url']['action']);
+			} else {
+				$check = Router::normalize($this->here) === Router::normalize($item['url']);
+			}
+		}
+
         $isActive = ($nowIsActive || $check);
-        
+
         $arrClass = array();
         if($pos===0) $arrClass[] = $this->settings['firstClass'];
         if($isActive) $arrClass[] = $this->settings['activeClass'];
         if($hasChildren) $arrClass[] = $this->settings['childrenClass'];
         if($this->settings['evenOdd']) $arrClass[] = (($pos&1)?'even':'odd');
-        
+
         $class = '';
         $arrClass = array_filter($arrClass);
         if(isset($item['class'])):
@@ -208,14 +210,14 @@ class MenuBuilderHelper extends AppHelper {
             else $arrClass[] = $item['class'];
         endif;
         if(!empty($arrClass)) $class = ' class="'.implode(' ', $arrClass).'"';
-        
+
         if(isset($item['id'])):
             $class = ' id="'.$item['id'].'"'.$class;
         endif;
-        
+
         if(is_null($item['url'])) $url = sprintf($this->settings['noLinkFormat'], $item['title']);
         else $url = '<a title="'.$item['title'].'" href="'.Router::url($item['url']).'">'.$item['title'].'</a>';
-        
+
         $pad = str_repeat("\t", $this->_depth);
         if($hasChildren):
             $urlPad = str_repeat("\t", $this->_depth+1);
@@ -223,8 +225,8 @@ class MenuBuilderHelper extends AppHelper {
             $children = "\n".$children.$pad;
         else:
         endif;
-        
+
         return sprintf('%s'.$this->settings['itemFormat']."\n", $pad, $class, $url, $children);
     }
-    
+
 }
