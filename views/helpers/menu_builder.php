@@ -60,7 +60,8 @@ class MenuBuilderHelper extends AppHelper {
         'permissions' => array(),
         'id' => null,
         'class' => null,
-		'tooltip' => null
+		'tooltip' => null,
+		'target' => null
     );
 
 /**
@@ -216,8 +217,15 @@ class MenuBuilderHelper extends AppHelper {
             $class = ' id="'.$item['id'].'"'.$class;
         endif;
 
-        if(is_null($item['url'])) $url = sprintf($this->settings['noLinkFormat'], $item['title']);
-        else $url = '<a title="'.$item['tooltip'].'" href="'.Router::url($item['url']).'">'.$item['title'].'</a>';
+        if(isset($item['target']))
+		$target = 'target="'.$item['target'].'"'.$class;
+        else
+		$target = null;
+
+        if(is_null($item['url']))
+		$url = sprintf($this->settings['noLinkFormat'], $item['title']);
+        else
+		$url = '<a '.$target.' title="'.$item['tooltip'].'" href="'.Router::url($item['url']).'">'.$item['title'].'</a>';
 
         $pad = str_repeat("\t", $this->_depth);
         if($hasChildren):
