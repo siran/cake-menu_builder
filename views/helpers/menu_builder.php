@@ -179,8 +179,8 @@ class MenuBuilderHelper extends AppHelper {
         if($children==='') $hasChildren = false;
 
         $check = false;
-        if (isset($item['url']) && !empty($item['partialMatch'])) {
-            if (is_bool($item['partialMatch'])) {
+        if (isset($item['url'])) {
+            if (!empty($item['partialMatch']) && is_bool($item['partialMatch'])) {
 				$item['alternativeActiveUrl'] = empty($item['alternativeActiveUrl']) ? array() : $item['alternativeActiveUrl'];
 				$item['url'] = empty($item['url']) ? array() : $item['url'];
 				$item['url'] = !is_array($item['url']) ? array($item['url']) : $item['url'];
@@ -190,7 +190,7 @@ class MenuBuilderHelper extends AppHelper {
 					$check = strpos(Router::normalize($this->here), Router::normalize($url))===0;
 					if ($check) break;
 				}
-			} elseif ($item['partialMatch'] == 'prefixControllerAction') {
+			} elseif (!empty($item['partialMatch']) && $item['partialMatch'] == 'prefixControllerAction') {
 				$check = ($this->params['controller'] == $item['url']['controller'] && $this->params['action'] == $this->params['prefix'].'_'.$item['url']['action']);
 			} else {
 				$check = Router::normalize($this->here) === Router::normalize($item['url']);
